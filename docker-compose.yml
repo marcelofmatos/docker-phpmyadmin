@@ -1,0 +1,55 @@
+### ENV
+#
+# WEBSERVER_FQDN
+# PMA_HOSTS
+#
+version: '3.8'
+
+services:
+
+  pma:
+    #image: phpmyadmin/phpmyadmin:5.1
+    image: phpmyadmin/phpmyadmin:latest
+    environment:
+      PMA_HOSTS: stack0_database, stack1_database
+      #PMA_VERBOSES: stack0, stack1
+      #PMA_ARBITRARY: 1
+      UPLOAD_LIMIT: '512M'
+      MEMORY_LIMIT: '1G'
+      MAX_EXECUTION_TIME: 1200
+      SHOW_BLOB: 'true'
+    networks:
+      - web
+      #- dbnet0
+      #- dbnet1
+      #- dbnet2
+    deploy:
+       mode: replicated
+       replicas: 1
+       #placement:
+       # constraints:
+       #   - node.labels.webserver == true
+       update_config:
+        order: start-first
+       labels:
+       - traefik.enable=true
+       - traefik.port=80
+       - traefik.frontend.rule=Host:${WEBSERVER_FQDN}
+       - traefik.protocol=http
+       - traefik.docker.network=web
+       - traefik.pma-path.frontend.auth.basic.users=pma:$$apr1$$8cdi2lfh$$LG8qPmyRXTLZFGbKs69c1. # 
+       
+       
+networks:
+  web:
+    external: true
+    name: web
+  dbnet0:
+    external: true
+    name: stack0_default
+  dbnet1:
+    external: true
+    name: stack1_default
+  dbnet2:
+    external: true
+    name: stack2_default
